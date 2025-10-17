@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏌️‍♂️ Putting Analyzer - Real BLE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+        
+        .header {
+            background: #2563eb;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            align-items: start;
+        }
+        
+        .left-panel {
+            max-width: 400px;
+        }
+        
+        .right-panel {
+            position: sticky;
+            top: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .status {
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .status.idle {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status.countdown {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .status.recording {
+            background: #fecaca;
+            color: #dc2626;
+        }
+        
+        .status.processing {
+            background: #c7d2fe;
+            color: #4338ca;
+        }
+        
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
+            transition: background 0.2s;
+        }
+        
+        .btn:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .btn.secondary {
+            background: #6b7280;
+        }
+        
+        .btn.secondary:hover {
+            background: #4b5563;
+        }
+        
+        .btn.success {
+            background: #059669;
+        }
+        
+        .btn.success:hover {
+            background: #047857;
+        }
+        
+        .result {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .result h3 {
+            color: #166534;
+            margin-bottom: 10px;
+        }
+        
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2563eb;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .feature {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .feature-name {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        
+        .feature-score {
+            font-weight: bold;
+            color: #2563eb;
+        }
+        
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .tab.active {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .countdown-display {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            color: #dc2626;
+            margin: 20px 0;
+            min-height: 60px;
+        }
+        
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .connection-status.connected {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+        
+        .connection-status.disconnected {
+            background: #fecaca;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+        }
+        
+        .connection-status.connecting {
+            background: #fef3c7;
+            color: #d97706;
+            border: 1px solid #fcd34d;
+        }
+        
+        .device-info {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .device-info h4 {
+            margin-bottom: 10px;
+            color: #1e293b;
+        }
+        
+        .device-info p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .log {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 2px 0;
+        }
+        
+        .log-entry.info { color: #60a5fa; }
+        .log-entry.success { color: #34d399; }
+        .log-entry.warning { color: #fbbf24; }
+        .log-entry.error { color: #f87171; }
+        
+        .feature-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+        
+        .feature-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .feature-name {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .feature-score {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .feature-value {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        
+        .feature-description {
+            font-size: 12px;
+            color: #475569;
+            font-style: italic;
+        }
+        
+        .ble-not-supported {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            color: #dc2626;
+            margin: 20px 0;
+        }
+        
+        .classification-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        .classification-box h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: white;
+        }
+        
+        .classification-result {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .classification-label {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: capitalize;
+        }
+        
+        .overall-score {
+            font-size: 48px;
+            font-weight: bold;
+            color: #fbbf24;
+            margin-bottom: 15px;
+        }
+        
+        .score-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .score-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #10b981 100%);
+            transition: width 0.5s ease;
+        }
+        
+        .feature-summary {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .feature-summary h4 {
+            margin-bottom: 15px;
+            text-align: center;
+            color: white;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .mini-feature {
+            background: rgba(255,255,255,0.15);
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        .mini-feature-name {
+            font-size: 10px;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 4px;
+        }
+        
+        .mini-feature-score {
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .no-data {
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+            font-style: italic;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏌️‍♂️ Putting Analyzer - Real BLE</h1>
+        <p>Connect to your Arduino board via Bluetooth</p>
+    </div>
+    
+    <div class="container">
+        <div class="main-layout">
+            <!-- Left Panel - Controls and Tabs -->
+            <div class="left-panel">
+                <div class="tabs">
+                    <div class="tab active" onclick="showTab('session')">🎯 Session</div>
+                    <div class="tab" onclick="showTab('ble')">🔵 Bluetooth</div>
+                    <div class="tab" onclick="showTab('history')">📊 History</div>
+                    <div class="tab" onclick="showTab('settings')">⚙️ Settings</div>
+                </div>
+                
+                <!-- Session Tab -->
+                <div id="session" class="tab-content active">
+                    <div class="card">
+                        <h2>🎯 Putting Session</h2>
+                        <div id="connectionStatus" class="connection-status disconnected">
+                            <span>🔴</span>
+                            <span>Not Connected</span>
+                        </div>
+                        
+                        <div id="status" class="status idle">
+                            <h3>Ready to Start</h3>
+                            <p>Connect your Arduino and begin analysis</p>
+                        </div>
+                        
+                        <div id="countdownDisplay" class="countdown-display" style="display: none;"></div>
+                        
+                        <button id="startBtn" class="btn" onclick="startSession()" disabled>
+                            🚀 Start Recording
+                        </button>
+                        
+                        <button id="stopBtn" class="btn secondary" onclick="stopSession()" disabled style="display: none;">
+                            ⏹️ Stop Recording (Auto)
+                        </button>
+                        
+                        <button id="resetBtn" class="btn secondary" onclick="resetSession()" disabled>
+                            🔄 Reset Session
+                        </button>
+                        
+                        <button id="manualReadBtn" class="btn secondary" onclick="manuallyReadData()" disabled>
+                            📡 Manual Read Data
+                        </button>
+                        
+                        <button id="readAnalysisBtn" class="btn success" onclick="readAnalysisData()" style="display: none;">
+                            📊 Read Analysis Data
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Bluetooth Tab -->
+                <div id="ble" class="tab-content">
+                    <div class="card">
+                        <h2>🔵 Bluetooth Connection</h2>
+                        
+                        <div id="bleNotSupported" class="ble-not-supported" style="display: none;">
+                            <h3>⚠️ Web Bluetooth Not Supported</h3>
+                            <p>This browser doesn't support Web Bluetooth API.</p>
+                            <p>Please use Chrome, Edge, or Opera on desktop.</p>
+                        </div>
+                        
+                        <div id="bleControls">
+                            <button id="connectBtn" class="btn success" onclick="connectToArduino()">
+                                🔍 Connect to Arduino
+                            </button>
+                            
+                            <button id="disconnectBtn" class="btn secondary" onclick="disconnectFromArduino()" disabled>
+                                🔌 Disconnect
+                            </button>
+                            
+                            <div id="deviceInfo" class="device-info" style="display: none;">
+                                <h4>Connected Device</h4>
+                                <p><strong>Name:</strong> <span id="deviceName">-</span></p>
+                                <p><strong>ID:</strong> <span id="deviceId">-</span></p>
+                                <p><strong>Status:</strong> <span id="deviceStatus">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>📋 Connection Log</h3>
+                        <div id="connectionLog" class="log">
+                            <div class="log-entry info">Ready to connect...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- History Tab -->
+                <div id="history" class="tab-content">
+                    <div class="card">
+                        <h2>📊 Session History</h2>
+                        <p>View your putting improvement over time</p>
+                        <div style="margin-top: 20px;">
+                            <p>No history available yet.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Settings Tab -->
+                <div id="settings" class="tab-content">
+                    <div class="card">
+                        <h2>⚙️ Settings</h2>
+                        <p>Configure your putting analyzer</p>
+                        <div style="margin-top: 20px;">
+                            <h3>Bluetooth Configuration</h3>
+                            <p><strong>Service UUID:</strong> 19b10000-e8f2-537e-4f6c-d104768a1214</p>
+                            <p><strong>Command Characteristic:</strong> 19b10001-e8f2-537e-4f6c-d104768a1214</p>
+                            <p><strong>Data Characteristic:</strong> 19b10002-e8f2-537e-4f6c-d104768a1214</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Panel - Classification Display -->
+            <div class="right-panel">
+                <div class="classification-box">
+                    <h2>🏌️‍♂️ Last Putt Analysis</h2>
+                    
+                    <div id="noDataMessage" class="no-data">
+                        <p>No putt data yet</p>
+                        <p>Connect and record a putt to see results</p>
+                    </div>
+                    
+                    <div id="classificationDisplay" style="display: none;">
+                        <div class="classification-result">
+                            <div id="classificationLabel" class="classification-label">Good</div>
+                            <div id="overallScoreDisplay" class="overall-score">85.2</div>
+                            <div class="score-bar">
+                                <div id="scoreBarFill" class="score-fill" style="width: 85.2%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-summary">
+                            <h4>📊 Feature Summary</h4>
+                            <div id="featureGrid" class="feature-grid">
+                                <!-- Features will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // BLE Configuration - Using standard UUID format
+        const ARDUINO_SERVICE_UUID = '19b10000-e8f2-537e-4f6c-d104768a1214';
+        const COMMAND_CHARACTERISTIC_UUID = '19b10001-e8f2-537e-4f6c-d104768a1214';
+        const DATA_CHARACTERISTIC_UUID = '19b10002-e8f2-537e-4f6c-d104768a1214';
+        
+        // BLE State
+        let bluetoothDevice = null;
+        let commandCharacteristic = null;
+        let dataCharacteristic = null;
+        let isConnected = false;
+        
+        // Session State
+        let currentStatus = 'idle';
+        let sessionActive = false;
+        
+        // Check Web Bluetooth support
+        if (!navigator.bluetooth) {
+            document.getElementById('bleNotSupported').style.display = 'block';
+            document.getElementById('bleControls').style.display = 'none';
+        }
+        
+        // Tab Management
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Logging
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('connectionLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        // BLE Connection
+        async function connectToArduino() {
+            try {
+                log('Starting Bluetooth scan...', 'info');
+                
+                // Try specific device names first
+                try {
+                    bluetoothDevice = await navigator.bluetooth.requestDevice({
+                        filters: [
+                            { namePrefix: 'Putting' },
+                            { namePrefix: 'Arduino' },
+                            { namePrefix: 'Nano' },
+                            { namePrefix: 'BLE' },
+                            { name: 'Putting Analyzer' },
+                            { name: 'Arduino Nano 33 BLE' }
+                        ],
+                        optionalServices: [ARDUINO_SERVICE_UUID]
+                    });
+                } catch (error) {
+                    log('Specific scan failed, trying broad scan...', 'warning');
+                    
+                    // Fallback: Scan for any BLE device
+                    bluetoothDevice = await navigator.bluetooth.requestDevice({
+                        acceptAllDevices: true,
+                        optionalServices: [ARDUINO_SERVICE_UUID]
+                    });
+                    
+                    log(`Found device: ${bluetoothDevice.name}`, 'info');
+                    
+                    // Check if this is the right device
+                    if (!bluetoothDevice.name || 
+                        (!bluetoothDevice.name.includes('Putting') && 
+                         !bluetoothDevice.name.includes('Arduino') && 
+                         !bluetoothDevice.name.includes('Nano'))) {
+                        log('⚠️ Device may not be your Arduino - proceed with caution', 'warning');
+                    }
+                }
+                
+                log(`Found device: ${bluetoothDevice.name}`, 'success');
+                
+                // Connect to GATT server
+                log('Connecting to GATT server...', 'info');
+                const server = await bluetoothDevice.gatt.connect();
+                log('GATT server connected', 'success');
+                
+                // Get service
+                log('Getting service...', 'info');
+                const service = await server.getPrimaryService(ARDUINO_SERVICE_UUID);
+                log('Service found', 'success');
+                
+                // Get characteristics
+                log('Getting characteristics...', 'info');
+                commandCharacteristic = await service.getCharacteristic(COMMAND_CHARACTERISTIC_UUID);
+                dataCharacteristic = await service.getCharacteristic(DATA_CHARACTERISTIC_UUID);
+                log('Characteristics found', 'success');
+                
+                // Enable notifications
+                await dataCharacteristic.startNotifications();
+                dataCharacteristic.addEventListener('characteristicvaluechanged', handleDataReceived);
+                log('Notifications enabled', 'success');
+                
+                // Update UI
+                isConnected = true;
+                updateConnectionStatus();
+                updateDeviceInfo();
+                enableSessionControls();
+                
+                log('✅ Arduino connected successfully!', 'success');
+                
+            } catch (error) {
+                log(`❌ Connection failed: ${error.message}`, 'error');
+                console.error('Bluetooth connection error:', error);
+            }
+        }
+        
+        function disconnectFromArduino() {
+            if (bluetoothDevice && bluetoothDevice.gatt.connected) {
+                bluetoothDevice.gatt.disconnect();
+                log('Disconnected from Arduino', 'warning');
+            }
+            
+            isConnected = false;
+            bluetoothDevice = null;
+            commandCharacteristic = null;
+            dataCharacteristic = null;
+            
+            updateConnectionStatus();
+            updateDeviceInfo();
+            disableSessionControls();
+        }
+        
+        function updateConnectionStatus() {
+            const statusDiv = document.getElementById('connectionStatus');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            
+            if (isConnected) {
+                statusDiv.className = 'connection-status connected';
+                statusDiv.innerHTML = '<span>🟢</span><span>Connected to Arduino</span>';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+            } else {
+                statusDiv.className = 'connection-status disconnected';
+                statusDiv.innerHTML = '<span>🔴</span><span>Not Connected</span>';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+            }
+        }
+        
+        function updateDeviceInfo() {
+            const deviceInfo = document.getElementById('deviceInfo');
+            const deviceName = document.getElementById('deviceName');
+            const deviceId = document.getElementById('deviceId');
+            const deviceStatus = document.getElementById('deviceStatus');
+            
+            if (isConnected && bluetoothDevice) {
+                deviceName.textContent = bluetoothDevice.name || 'Unknown';
+                deviceId.textContent = bluetoothDevice.id || 'Unknown';
+                deviceStatus.textContent = bluetoothDevice.gatt.connected ? 'Connected' : 'Disconnected';
+                deviceInfo.style.display = 'block';
+            } else {
+                deviceInfo.style.display = 'none';
+            }
+        }
+        
+        function enableSessionControls() {
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('manualReadBtn').disabled = false;
+        }
+        
+        function disableSessionControls() {
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('resetBtn').disabled = true;
+            document.getElementById('manualReadBtn').disabled = true;
+        }
+        
+        // Data Handling
+        function handleDataReceived(event) {
+            const value = event.target.value;
+            
+            // Check if this is compact binary data (10 bytes) or JSON text
+            if (value.byteLength === 10) {
+                // Compact binary format from Arduino
+                log(`📦 Received compact binary data (${value.byteLength} bytes)`, 'success');
+                const decodedData = decodeCompactData(new DataView(value.buffer));
+                handleArduinoData(decodedData);
+            } else {
+                // JSON text format (legacy)
+                const decoder = new TextDecoder('utf-8');
+                const data = decoder.decode(value);
+                
+                try {
+                    const jsonData = JSON.parse(data);
+                    log(`📊 Received JSON: ${data.substring(0, 100)}...`, 'success');
+                    handleArduinoData(jsonData);
+                } catch (error) {
+                    log(`📡 Raw data: ${data}`, 'info');
+                }
+            }
+        }
+        
+        // Decode compact binary data from Arduino
+        function decodeCompactData(dataView) {
+            const decoder = new TextDecoder('utf-8');
+            
+            // Extract classification and score
+            const classification_int = dataView.getUint8(0);
+            const overall_score = dataView.getUint8(1);
+            
+            // Convert classification integer back to string
+            const classification_names = ['good', 'push', 'pull', 'overaccelerated', 'decelerated'];
+            const classification = classification_names[classification_int] || 'unknown';
+            
+            // Decode actual feature measurements from 8-bit values
+            // Scale: 0-255 → -2.0 to +2.0 (128 = neutral/zero)
+            const decodeFeature = (byteValue) => {
+                return ((byteValue - 128) / 63.75).toFixed(3);
+            };
+            
+            const features = {
+                x_direction: {
+                    value: parseFloat(decodeFeature(dataView.getUint8(2))),
+                    description: "Backswing direction (negative = left, positive = right)"
+                },
+                y_movement: {
+                    value: parseFloat(decodeFeature(dataView.getUint8(3))),
+                    description: "Lateral movement (negative = left, positive = right)"
+                },
+                z_stability: {
+                    value: parseFloat(decodeFeature(dataView.getUint8(4))),
+                    description: "Height consistency (negative = low, positive = high)"
+                },
+                smoothness: {
+                    value: parseFloat(decodeFeature(dataView.getUint8(5))),
+                    description: "Acceleration smoothness (negative = jerky, positive = smooth)"
+                },
+                acceleration: {
+                    value: parseFloat(decodeFeature(dataView.getUint8(6))),
+                    description: "Tempo consistency (negative = slow, positive = fast)"
+                },
+                face_rotation: {
+                    value: parseFloat(decodeFeature(dataView.getUint8(7))),
+                    description: "Face angle (negative = closed, positive = open)"
+                },
+                path_rotation: {
+                    value: parseFloat(decodeFeature(dataView.getUint8(8))),
+                    description: "Path direction (negative = left, positive = right)"
+                },
+                rotational_stability: {
+                    value: parseFloat(decodeFeature(dataView.getUint8(9))),
+                    description: "Rotation consistency (negative = unstable, positive = stable)"
+                }
+            };
+            
+            // Calculate scores from actual values (for display)
+            const calculateScore = (value, idealRange = 0.3) => {
+                const absValue = Math.abs(value);
+                if (absValue <= idealRange) return 100;
+                if (absValue <= 1.0) return Math.max(0, 100 - (absValue - idealRange) * 100);
+                return 0;
+            };
+            
+            // Add scores to features
+            Object.keys(features).forEach(key => {
+                features[key].score = calculateScore(features[key].value);
+            });
+            
+            return {
+                classification: classification,
+                overall_score: overall_score,
+                features: features,
+                data_format: 'compact_binary',
+                timestamp: Date.now()
+            };
+        }
+        
+        // Get feature descriptions based on scores
+        function getFeatureDescription(featureName, score) {
+            if (score >= 80) return "Excellent";
+            if (score >= 60) return "Good";
+            if (score >= 40) return "Fair";
+            return "Needs improvement";
+        }
+        
+        function handleArduinoData(data) {
+            console.log('Received Arduino data:', data);
+            log(`🔍 Processing data type: ${typeof data}`, 'info');
+            log(`📊 Raw data received: ${JSON.stringify(data)}`, 'info');
+            
+            // Handle different data formats
+            if (data.classification && data.overall_score !== undefined) {
+                // Analysis results (from compact binary or JSON)
+                log(`🎯 ANALYSIS RESULTS RECEIVED: ${data.classification} (${data.overall_score}/100)`, 'success');
+                log(`🔍 Features available: ${data.features ? 'Yes' : 'No'}`, 'info');
+                log(`📊 Feature count: ${data.features ? Object.keys(data.features).length : 0}`, 'info');
+                if (data.data_format) {
+                    log(`📦 Data format: ${data.data_format}`, 'info');
+                }
+                
+                // Update the classification box
+                updateClassificationBox(data);
+                
+                // Update status
+                updateStatus('idle', 'Analysis complete! Ready for next putt');
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('resetBtn').disabled = false;
+                
+                // Store in history
+                storeInHistory(data);
+                
+            } else if (data.status === 'analysis_complete') {
+                // Analysis completion status
+                log(`✅ Analysis complete status received: ${data.message}`, 'success');
+                log(`💡 Check the classification box on the right for results`, 'info');
+                log(`🔍 If no results appear, click "Read Analysis Data" button`, 'info');
+                
+                // Show the read analysis button
+                document.getElementById('readAnalysisBtn').style.display = 'block';
+                document.getElementById('readAnalysisBtn').disabled = false;
+                
+            } else if (data.status) {
+                // Status messages (countdown, recording, etc.)
+                log(`📱 Status: ${data.message}`, 'info');
+                
+                if (data.status === 'countdown') {
+                    updateStatus('countdown', data.message);
+                } else if (data.status === 'recording') {
+                    updateStatus('recording', data.message);
+                } else if (data.status === 'idle') {
+                    updateStatus('idle', data.message);
+                }
+            } else {
+                // Log unknown data format
+                log(`❓ Unknown data format: ${JSON.stringify(data)}`, 'warning');
+            }
+        }
+        
+        function updateClassificationBox(data) {
+            log(`🎯 Updating classification box with: ${data.classification} (${data.overall_score}/100)`, 'success');
+            
+            // Hide no data message and show classification display
+            document.getElementById('noDataMessage').style.display = 'none';
+            document.getElementById('classificationDisplay').style.display = 'block';
+            
+            // Update classification label
+            document.getElementById('classificationLabel').textContent = data.classification;
+            
+            // Update overall score
+            document.getElementById('overallScoreDisplay').textContent = data.overall_score.toFixed(1);
+            
+            // Update score bar
+            const scoreBarFill = document.getElementById('scoreBarFill');
+            scoreBarFill.style.width = data.overall_score + '%';
+            
+            // Update feature grid
+            updateFeatureGrid(data.features);
+            
+            log(`✅ Classification box updated successfully`, 'success');
+        }
+        
+        function updateFeatureGrid(features) {
+            log(`🔍 Updating feature grid with ${features ? Object.keys(features).length : 0} features`, 'info');
+            
+            const featureGrid = document.getElementById('featureGrid');
+            if (!features) {
+                log(`⚠️ No features data available`, 'warning');
+                featureGrid.innerHTML = '<div class="mini-feature"><div class="mini-feature-name">No Data</div><div class="mini-feature-score">-</div></div>';
+                return;
+            }
+            
+            let html = '';
+            let featureCount = 0;
+            
+            for (const [featureName, featureData] of Object.entries(features)) {
+                if (typeof featureData === 'object' && featureData.score !== undefined && featureCount < 8) {
+                    const score = featureData.score || 0;
+                    const scoreColor = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444';
+                    
+                    html += `
+                        <div class="mini-feature">
+                            <div class="mini-feature-name">${featureName.replace(/_/g, ' ').toUpperCase()}</div>
+                            <div class="mini-feature-score" style="color: ${scoreColor}">${score.toFixed(0)}</div>
+                        </div>
+                    `;
+                    featureCount++;
+                    log(`📊 Feature: ${featureName} = ${score}/100`, 'info');
+                }
+            }
+            
+            featureGrid.innerHTML = html;
+            log(`✅ Feature grid updated with ${featureCount} features`, 'success');
+        }
+        
+        function storeInHistory(data) {
+            const history = JSON.parse(localStorage.getItem('puttingHistory') || '[]');
+            const session = {
+                timestamp: new Date().toISOString(),
+                classification: data.classification,
+                overall_score: data.overall_score,
+                features: data.features || {}
+            };
+            history.push(session);
+            localStorage.setItem('puttingHistory', JSON.stringify(history));
+            log(`💾 Stored session in history (${history.length} total)`, 'success');
+        }
+        
+
+        
+        // Session Control
+        async function startSession() {
+            if (!isConnected) {
+                log('❌ Not connected to Arduino', 'error');
+                return;
+            }
+            
+            try {
+                // Send START command to Arduino
+                const command = 'START_RECORDING';
+                await commandCharacteristic.writeValue(new TextEncoder().encode(command));
+                log(`📤 Sent command: ${command}`, 'success');
+                
+                updateStatus('countdown', 'Get ready to putt!');
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = true; // Disable stop button
+                document.getElementById('resetBtn').disabled = false;
+                
+                // Show countdown
+                const countdownDisplay = document.getElementById('countdownDisplay');
+                countdownDisplay.style.display = 'block';
+                
+                let count = 3;
+                countdownDisplay.textContent = count;
+                countdownDisplay.style.color = '#dc2626';
+                
+                const countdownInterval = setInterval(() => {
+                    count--;
+                    if (count > 0) {
+                        countdownDisplay.textContent = count;
+                    } else {
+                        countdownDisplay.textContent = '🎯';
+                        countdownDisplay.style.color = '#2563eb';
+                        clearInterval(countdownInterval);
+                        
+                        setTimeout(() => {
+                            updateStatus('recording', 'Recording now!');
+                            countdownDisplay.style.display = 'none';
+                            
+                            // Auto-stop after 4 seconds
+                            setTimeout(async () => {
+                                try {
+                                    updateStatus('processing', 'Processing data...');
+                                    log('🔄 Auto-stopping recording after 4 seconds...', 'info');
+                                    
+                                    // Send STOP command to Arduino
+                                    const command = 'STOP_RECORDING';
+                                    await commandCharacteristic.writeValue(new TextEncoder().encode(command));
+                                    log(`📤 Sent auto-stop command: ${command}`, 'success');
+                                    
+                                } catch (error) {
+                                    log(`❌ Auto-stop failed: ${error.message}`, 'error');
+                                }
+                            }, 4000); // 4 seconds
+                            
+                        }, 1000);
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                log(`❌ Failed to send command: ${error.message}`, 'error');
+            }
+        }
+        
+        async function stopSession() {
+            if (!isConnected) {
+                log('❌ Not connected to Arduino', 'error');
+                return;
+            }
+            
+            try {
+                // Send STOP command to Arduino
+                const command = 'STOP_RECORDING';
+                await commandCharacteristic.writeValue(new TextEncoder().encode(command));
+                log(`📤 Sent command: ${command}`, 'success');
+                
+                updateStatus('processing', 'Processing data...');
+                
+            } catch (error) {
+                log(`❌ Failed to send command: ${error.message}`, 'error');
+            }
+        }
+        
+        function resetSession() {
+            updateStatus('idle', 'Ready to start');
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('resetBtn').disabled = true;
+            document.getElementById('result').style.display = 'none';
+        }
+        
+        function updateStatus(status, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${status}`;
+            
+            switch(status) {
+                case 'idle':
+                    statusDiv.innerHTML = '<h3>Ready to Start</h3><p>Connect your Arduino and begin analysis</p>';
+                    break;
+                case 'countdown':
+                    statusDiv.innerHTML = '<h3>🔴 Get Ready!</h3><p>Countdown in progress...</p>';
+                    break;
+                case 'recording':
+                    statusDiv.innerHTML = '<h3>🎯 Recording Active</h3><p>Make your putt now!</p>';
+                    break;
+                case 'processing':
+                    statusDiv.innerHTML = '<h3>🔍 Processing Data</h3><p>Analyzing your putting stroke...</p>';
+                    break;
+            }
+            
+            currentStatus = status;
+        }
+        
+        // Handle disconnection
+        if (navigator.bluetooth) {
+            navigator.bluetooth.addEventListener('adapterstatechanged', (event) => {
+                if (!event.target.state === 'available') {
+                    log('⚠️ Bluetooth adapter unavailable', 'warning');
+                }
+            });
+        }
+        
+        // Test function to manually trigger classification box update
+        function testClassificationBox() {
+            const testData = {
+                classification: "good",
+                overall_score: 75.5,
+                features: {
+                    x_direction: { score: 80.0, value: 0.2, description: "Straight back and through" },
+                    y_movement: { score: 70.0, value: 0.4, description: "Minimal lateral movement" },
+                    z_stability: { score: 85.0, value: 1.0, description: "Consistent height" },
+                    smoothness: { score: 75.0, value: 0.8, description: "Smooth acceleration" },
+                    acceleration: { score: 80.0, value: 1.1, description: "Consistent tempo" },
+                    face_rotation: { score: 65.0, value: 0.3, description: "Square face" },
+                    path_rotation: { score: 70.0, value: 0.5, description: "Straight path" },
+                    rotational_stability: { score: 85.0, value: 0.9, description: "Stable rotation" }
+                }
+            };
+            
+            log('🧪 Testing classification box with sample data', 'info');
+            updateClassificationBox(testData);
+        }
+        
+        // Test function to simulate receiving compact binary data
+        function testCompactData() {
+            log('🧪 Testing compact binary data decoding...', 'info');
+            
+            // Simulate Arduino sending compact binary data (10 bytes)
+            // This represents: good putt, 75 score, with actual measured values
+            const testBytes = new Uint8Array([
+                0,    // Classification: 0 = good
+                75,   // Overall Score: 75/100
+                128,  // x_direction: 0.0 (neutral) → 128
+                96,   // y_movement: -0.5 (slight left) → 96
+                160,  // z_stability: +0.5 (slight high) → 160
+                176,  // smoothness: +0.75 (smooth) → 176
+                144,  // acceleration: +0.25 (slight fast) → 144
+                128,  // face_rotation: 0.0 (square) → 128
+                112,  // path_rotation: -0.25 (slight left) → 112
+                192   // rotational_stability: +1.0 (stable) → 192
+            ]);
+            
+            log(`📦 Simulating ${testBytes.length} bytes of compact data`, 'info');
+            
+            // Create DataView and decode
+            const dataView = new DataView(testBytes.buffer);
+            const decodedData = decodeCompactData(dataView);
+            
+            log(`✅ Decoded: ${decodedData.classification} (${decodedData.overall_score}/100)`, 'success');
+            log(`🔍 Features: ${Object.keys(decodedData.features).length} measurements`, 'info');
+            
+            // Update the UI with the decoded data
+            updateClassificationBox(decodedData);
+            updateFeatureGrid(decodedData.features);
+            
+            log('🎯 Compact data test complete - check the classification box!', 'success');
+        }
+        
+        // Manual data read function to test BLE data reception
+        async function manuallyReadData() {
+            if (!isConnected || !dataCharacteristic) {
+                log('❌ Not connected or no data characteristic', 'error');
+                return;
+            }
+            
+            try {
+                log('🔍 Manually reading data from Arduino...', 'info');
+                const value = await dataCharacteristic.readValue();
+                const decoder = new TextDecoder('utf-8');
+                const data = decoder.decode(value);
+                
+                log(`📡 Manually read: ${data}`, 'success');
+                
+                try {
+                    const jsonData = JSON.parse(data);
+                    handleArduinoData(jsonData);
+                } catch (error) {
+                    log(`❌ JSON parse error: ${error.message}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ Manual read failed: ${error.message}`, 'error');
+            }
+        }
+
+        function readAnalysisData() {
+            if (!isConnected || !dataCharacteristic) {
+                log('❌ Not connected or no data characteristic', 'error');
+                return;
+            }
+
+            try {
+                log('📊 Reading analysis data from Arduino...', 'info');
+                const command = 'READ_ANALYSIS_DATA';
+                commandCharacteristic.writeValue(new TextEncoder().encode(command));
+                log(`📤 Sent command: ${command}`, 'success');
+                updateStatus('processing', 'Reading analysis data...');
+                document.getElementById('readAnalysisBtn').disabled = true; // Disable button while reading
+            } catch (error) {
+                log(`❌ Failed to send command: ${error.message}`, 'error');
+            }
+        }
+        
+        // Initialize
+        log('🏌️‍♂️ Putting Analyzer BLE Ready', 'info');
+        log('Click "Connect to Arduino" to begin', 'info');
+        log('💡 Tip: Open console and run testClassificationBox() to test the UI', 'info');
+        log('💡 Tip: Run testCompactData() to test compact binary data decoding', 'info');
+        log('💡 Tip: Compact data now sends ACTUAL measured values, not just scores!', 'info');
+    </script>
+</body>
+</html>
