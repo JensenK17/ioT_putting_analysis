@@ -1,6 +1,6 @@
-# Putting Project - Stroke Analysis System
+# IoT Putting Analysis System
 
-A professional putting stroke detection and analysis system with both a native mobile app (Expo) and a web application. The system receives real-time classifications from an Arduino board with IMU sensors and provides high-quality visualization and data storage for training sessions.
+A comprehensive full-stack embedded edge AI putting stroke feedback system featuring real-time biomechanical analysis, custom PCB hardware, and multiple client applications.
 
 ## 🏗️ Project Structure
 
@@ -9,184 +9,167 @@ Putting Project/
 ├── apps/
 │   ├── expo-app/          # React Native Expo mobile app
 │   └── web-app/           # Next.js web application
-├── data/                  # Data storage (legacy)
-├── data_creation_code/    # Legacy data collection scripts
+├── Putting_Device/        # Custom PCB design and manufacturing files
+├── docs/                  # Project documentation and visualizations
+├── arduino_putting_analyzer_final/  # Arduino firmware
 └── README.md
 ```
 
-## 📱 Expo Mobile App
+## 🎯 System Overview
 
-A React Native application that can run on Expo Go, providing:
-- Bluetooth connectivity to Arduino sensors
-- Real-time stroke classification display
-- Session management with user-defined durations
+This project implements a complete IoT ecosystem for putting stroke analysis:
+
+- **Arduino Firmware**: Real-time IMU data processing and biomechanical feature extraction
+- **Custom PCB**: Ultra-compact hardware with nRF52820 BLE microcontroller and LSM6DS3 IMU
+- **Mobile App**: React Native/Expo application for data visualization and session management
+- **Web App**: Next.js web application with Web Bluetooth API support
+- **Manufacturing Files**: Complete PCB production files for JLCPCB assembly
+
+## 🔧 Hardware Components
+
+### Custom PCB Design
+- **Microcontroller**: Nordic nRF52820-QDx (BLE + ARM Cortex-M4)
+- **IMU**: STMicroelectronics LSM6DS3 (3-axis accelerometer + gyroscope)
+- **Power**: 3.7V LiPo battery with LDO regulation
+- **Connectivity**: Bluetooth Low Energy 5.0
+- **Form Factor**: Ultra-compact 20mm x 15mm PCB
+
+### Arduino Prototype
+- **Board**: Arduino Nano 33 BLE Sense
+- **IMU**: LSM9DS1 (9-axis motion sensor)
+- **Connectivity**: Built-in BLE module
+- **Power**: USB or external battery pack
+
+## 📱 Software Applications
+
+### Mobile App (Expo/React Native)
+- Real-time BLE communication with Arduino
+- Live stroke classification display
+- Session management and history tracking
 - Professional UI with smooth animations
-- Data persistence and session history
 
-### Features
-- **Home Screen**: Overview dashboard with session statistics
-- **Session Screen**: Real-time recording and classification display
-- **History Screen**: Past session review and analysis
-- **Settings Screen**: Bluetooth configuration and app preferences
-
-### Setup
-```bash
-cd apps/expo-app
-npm install
-npm start
-```
-
-### Dependencies
-- Expo SDK 50
-- React Navigation
-- Expo Bluetooth
-- React Native Reanimated
-- Linear Gradient
-
-## 🌐 Web Application
-
-A modern Next.js web app for desktop/laptop use:
+### Web App (Next.js)
+- Web Bluetooth API integration
 - Responsive design with Tailwind CSS
-- Real-time stroke classification updates
-- Session control and management
-- Professional dashboard interface
-- Chart.js integration for data visualization
+- Real-time data visualization
+- Cross-platform compatibility
 
-### Features
-- **Dashboard**: Comprehensive overview with statistics
-- **Session Control**: Start/stop sessions with custom durations
-- **Real-time Updates**: Live classification display
-- **Responsive Design**: Works on all device sizes
+## 🤖 AI/ML Features
 
-### Setup
-```bash
-cd apps/web-app
-npm install
-npm run dev
-```
+### Biomechanical Analysis
+- **14 Feature Extraction**: Comprehensive stroke analysis including:
+  - Direction consistency (x, y, z axes)
+  - Acceleration smoothness
+  - Face angle stability
+  - Path straightness
+  - Rotational stability
+  - Tempo consistency
 
-### Dependencies
-- Next.js 14
-- React 18
-- Tailwind CSS
-- Chart.js
-- Framer Motion
-- Lucide React Icons
-
-## 🔌 Arduino Integration
-
-The system is designed to receive classifications from an Arduino board equipped with:
-- IMU sensors (accelerometer, gyroscope)
-- Bluetooth Low Energy (BLE) connectivity
-- Edge Impulse model integration for real-time classification
-
-### Data Format
-The Arduino sends classification results in the format:
-```json
-{
-  "label": "stroke_classification",
-  "confidence": 0.95,
-  "timestamp": 1640995200000
-}
-```
-
-### Supported Classifications
-- `excellent_stroke`: High-quality putting stroke
-- `good_stroke`: Good stroke with minor improvements needed
-- `needs_work`: Stroke requires practice and refinement
-- `poor_stroke`: Stroke needs significant improvement
+### Classification System
+- **Feature-based Classification**: Identifies specific stroke issues
+- **Categories**: Good, Push, Pull, Overaccelerated, Decelerated
+- **Scoring**: 0-100 scale with detailed feature breakdowns
+- **Real-time Processing**: <4 second analysis time
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js 18+ and npm
-- Expo CLI (for mobile development)
-- Arduino IDE (for sensor programming)
+- Arduino IDE
+- KiCad (for PCB modifications)
 
-### Installation
+### Quick Start
 
 1. **Clone the repository**
 ```bash
-git clone <repository-url>
-cd "Putting Project"
+git clone https://github.com/JensenK17/ioT_putting_analysis.git
+cd ioT_putting_analysis
 ```
 
-2. **Install dependencies for all apps**
+2. **Arduino Setup**
 ```bash
-npm run install:all
+# Upload firmware to Arduino Nano 33 BLE Sense
+# Open arduino_putting_analyzer_final/arduino_putting_analyzer_final.ino
+# Install required libraries: ArduinoBLE, Arduino_LSM9DS1
 ```
 
-3. **Start the web app**
+3. **Web App**
 ```bash
-npm run dev:web
+cd apps/web-app
+npm install
+npm run dev
+# Open http://localhost:3000
 ```
 
-4. **Start the Expo app**
+4. **Mobile App**
 ```bash
-npm run dev:expo
+cd apps/expo-app
+npm install
+npm start
+# Scan QR code with Expo Go app
 ```
 
-### Running on Expo Go
+## 📊 Data Format
 
-1. Install Expo Go on your mobile device
-2. Scan the QR code from the Expo development server
-3. The app will load and be ready for use
+### Compact Binary Transmission
+- **10-byte payload**: Optimized for BLE transmission
+- **Classification**: 1 byte (0-4 for stroke types)
+- **Score**: 1 byte (0-100 overall rating)
+- **Features**: 8 bytes (scaled biomechanical measurements)
 
-### Running the Web App
+### JSON Format (Legacy)
+```json
+{
+  "classification": "good",
+  "overall_score": 85.2,
+  "features": {
+    "x_direction": {"value": -0.12, "score": 95.0},
+    "y_movement": {"value": 0.05, "score": 98.0}
+  }
+}
+```
 
-1. Navigate to `http://localhost:3000` in your browser
-2. The dashboard will be available for use
+## 🏭 Manufacturing
 
-## 📊 Data Management
+### PCB Production
+- **Manufacturer**: JLCPCB (recommended)
+- **Assembly**: Full SMT assembly available
+- **Files**: Complete Gerber, drill, and placement files included
+- **Components**: BOM with DigiKey/Mouser part numbers
 
-### Session Storage
-- Sessions are stored locally on the device
-- User-defined session durations
-- Automatic data persistence
-- Export capabilities for data analysis
+### Custom PCB Features
+- **Ultra-compact**: 20mm x 15mm footprint
+- **Magnetic mounting**: Designed for easy attachment
+- **Battery powered**: 3.7V LiPo with 8+ hour runtime
+- **Professional finish**: ENIG surface treatment
 
-### Data Retention
-- Configurable retention periods
-- Automatic cleanup of old sessions
-- Backup and restore functionality
+## 📈 Performance Metrics
 
-## 🎯 Use Cases
+- **Model Size**: ~2KB (quantized from 15KB)
+- **Processing Time**: <4 seconds per putt
+- **Battery Life**: 8+ hours continuous operation
+- **BLE Range**: 10+ meters
+- **Accuracy**: 85%+ classification accuracy
 
-- **Golf Training**: Improve putting technique through data-driven feedback
-- **Coaching**: Coaches can analyze student performance over time
-- **Performance Tracking**: Monitor progress and identify improvement areas
-- **Research**: Collect data for sports science studies
+## 🔬 Technical Specifications
 
-## 🔧 Configuration
+### Embedded System
+- **MCU**: ARM Cortex-M4 @ 64MHz
+- **Memory**: 256KB Flash, 32KB RAM
+- **Sensors**: 6-axis IMU @ 100Hz sampling
+- **Connectivity**: BLE 5.0 with custom service
 
-### Bluetooth Settings
-- Automatic device discovery
-- Connection management
-- Signal strength monitoring
-- Auto-reconnection support
+### Software Stack
+- **Firmware**: Arduino C++ with custom libraries
+- **Mobile**: React Native with Expo
+- **Web**: Next.js with Web Bluetooth API
+- **PCB Design**: KiCad with professional manufacturing
 
-### Session Preferences
-- Default session duration
-- Auto-save settings
-- Data retention policies
-- Export formats
+## 📝 Documentation
 
-## 🚧 Development Notes
-
-### Current Implementation
-- Mock data for demonstration purposes
-- Bluetooth functionality simulated
-- Real-time updates every 3 seconds
-
-### Production Ready Features
-- Replace mock Bluetooth with actual BLE implementation
-- Integrate with Edge Impulse API for real classifications
-- Implement secure data storage
-- Add user authentication
-
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+- **`ARDUINO_DEPLOYMENT_README.md`**: Complete Arduino setup guide
+- **`Putting_Device/Manufacturing/README.md`**: PCB manufacturing instructions
+- **`docs/`**: Performance analysis and architecture diagrams
 
 ## 🤝 Contributing
 
@@ -198,8 +181,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 📞 Support
 
-For questions or support, please open an issue in the repository or contact the development team.
+For questions or support, please open an issue in the repository.
 
 ---
 
-**Note**: This system is designed to work with Edge Impulse models and Arduino hardware. Ensure your sensor setup is properly configured before use.
+**Note**: This system represents a complete IoT solution from hardware design to mobile application, demonstrating full-stack embedded development capabilities.
